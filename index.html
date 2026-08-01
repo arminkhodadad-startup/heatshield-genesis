@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HeatShield Genesis</title>
+  <meta name="description" content="Satellite-powered urban climate resilience operating system" />
+  <style>
+:root {
+  --bg: #07121f;
+  --bg2: #0c1d31;
+  --panel: rgba(38, 42, 77, 0.72);
+  --panel-strong: rgba(47, 49, 86, 0.92);
+  --panel-soft: rgba(58, 65, 101, 0.42);
+  --line: rgba(146, 213, 255, 0.13);
+  --line-bright: rgba(93, 244, 255, 0.34);
+  --text: #effbff;
+  --muted: #8da7bc;
+  --cyan: #1ff4ed;
+  --cyan2: #0cbecf;
+  --purple: #8d5cff;
+  --pink: #ff5fa8;
+  --orange: #ff9d67;
+  --green: #5df5a4;
+  --red: #ff637d;
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.44);
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 13% 8%, rgba(0, 234, 242, 0.18), transparent 25%),
+    radial-gradient(circle at 85% 18%, rgba(139, 84, 255, 0.16), transparent 25%),
+    radial-gradient(circle at 52% 90%, rgba(255, 72, 151, 0.10), transparent 28%),
+    linear-gradient(145deg, #071421 0%, #0a1829 43%, #080d19 100%);
+  overflow-x: hidden;
+}
+button, input, select { font: inherit; }
+button { color: inherit; }
+
+.app-shell {
+  min-height: 100vh;
+  padding: 26px;
+  position: relative;
+}
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .25;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+}
+
+.dashboard-frame {
+  max-width: 1880px;
+  min-height: calc(100vh - 52px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr) 290px;
+  overflow: hidden;
+  border: 1px solid rgba(183, 225, 255, .14);
+  border-radius: 42px;
+  background:
+    linear-gradient(145deg, rgba(71, 65, 115, .72), rgba(19, 31, 53, .88)),
+    radial-gradient(circle at 35% 0%, rgba(255, 123, 210, .13), transparent 36%);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.1);
+  backdrop-filter: blur(20px);
+  position: relative;
+}
+.dashboard-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px rgba(0, 240, 255, .035);
+}
+
+.sidebar {
+  padding: 22px 12px;
+  border-right: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(22, 37, 61, .72), rgba(15, 25, 44, .62));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  z-index: 2;
+}
+.brand-orb {
+  width: 56px;
+  height: 56px;
+  border-radius: 19px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  letter-spacing: -.08em;
+  color: #071a22;
+  background: conic-gradient(from 210deg, var(--cyan), #e7ffff, var(--purple), var(--pink), var(--cyan));
+  box-shadow: 0 0 28px rgba(31, 244, 237, .32), inset 0 0 0 3px rgba(255,255,255,.2);
+  margin-bottom: 8px;
+}
+.nav-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  width: 100%;
+  align-items: center;
+  padding: 4px 0;
+}
+.nav-scroll::-webkit-scrollbar { display:none; }
+.nav-button {
+  width: 61px;
+  min-height: 58px;
+  border: 1px solid transparent;
+  border-radius: 19px;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: .24s ease;
+}
+.nav-button:hover {
+  border-color: rgba(99, 240, 255, .22);
+  background: rgba(83, 100, 144, .23);
+  transform: translateY(-1px);
+}
+.nav-button.active {
+  border-color: rgba(79, 247, 255, .46);
+  background: linear-gradient(145deg, rgba(40, 237, 237, .22), rgba(116, 76, 255, .23));
+  box-shadow: 0 10px 26px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.14), 0 0 18px rgba(39, 235, 246, .12);
+}
+.nav-button.active::before {
+  content:"";
+  position:absolute;
+  left:-13px;
+  width:4px;
+  height:27px;
+  border-radius: 0 5px 5px 0;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+}
+.nav-icon { font-size: 21px; filter: drop-shadow(0 0 7px rgba(85,245,255,.2)); }
+.nav-index { font-size: 8px; color: var(--muted); margin-top: -8px; }
+.sidebar-bottom { margin-top: auto; display:flex; flex-direction:column; gap:8px; }
+
+.main-area {
+  min-width: 0;
+  padding: 23px 24px 25px;
+  position: relative;
+  z-index: 1;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.title-stack { min-width: 260px; }
+.eyebrow {
+  color: var(--cyan);
+  font-size: 10px;
+  letter-spacing: .22em;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+h1 { margin: 3px 0 0; font-size: clamp(23px, 2.2vw, 34px); line-height: 1; letter-spacing: -.04em; }
+.top-controls { margin-left: auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.control-chip, .select-control, .date-control {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: linear-gradient(145deg, rgba(69,76,116,.52), rgba(33,40,68,.7));
+  border-radius: 14px;
+  padding: 0 13px;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.select-control option { background:#17233b; color:white; }
+.date-control { color-scheme: dark; }
+.control-chip { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.control-chip:hover { border-color: var(--line-bright); }
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 10px var(--green); }
+
+.module-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:18px;
+  margin-bottom: 16px;
+}
+.module-title h2 { margin:0; font-size:22px; letter-spacing:-.035em; }
+.module-title p { margin:6px 0 0; color:var(--muted); max-width:760px; font-size:12px; line-height:1.55; }
+.action-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.btn {
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(68,78,119,.55), rgba(30,38,65,.75));
+  border-radius: 13px;
+  padding: 10px 13px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition:.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.btn:hover { transform: translateY(-1px); border-color: rgba(75,240,255,.45); box-shadow:0 8px 19px rgba(0,0,0,.2); }
+.btn.primary { color:#05191f; background:linear-gradient(135deg, #6afff4, #1bd7ea); border-color:#87fff8; box-shadow:0 0 20px rgba(29,238,239,.2); }
+.btn.purple { background:linear-gradient(135deg, rgba(151,92,255,.92), rgba(101,69,218,.88)); border-color:rgba(199,167,255,.65); }
+.btn.pink { background:linear-gradient(135deg, rgba(255,92,172,.88), rgba(180,54,132,.88)); border-color:rgba(255,165,213,.55); }
+.btn.danger { border-color:rgba(255,95,126,.38); color:#ffb0be; }
+.btn.small { padding:7px 9px; font-size:9px; border-radius:10px; }
+.btn:disabled { opacity:.42; cursor:not-allowed; transform:none; }
+
+.metric-grid {
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap:12px;
+  margin-bottom: 13px;
+}
+.metric-card, .glass-card {
+  border:1px solid var(--line);
+  background:linear-gradient(145deg, rgba(66,68,106,.58), rgba(28,39,64,.74));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 14px 32px rgba(0,0,0,.16);
+  border-radius:21px;
+  backdrop-filter: blur(14px);
+}
+.metric-card { padding:15px 16px; position:relative; overflow:hidden; }
+.metric-card::after { content:""; position:absolute; width:75px; height:75px; border-radius:50%; right:-28px; top:-31px; background:var(--metric-color, var(--cyan)); filter:blur(26px); opacity:.2; }
+.metric-label { font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+.metric-main { display:flex; align-items:flex-end; gap:7px; margin-top:7px; }
+.metric-value { font-size:26px; line-height:1; font-weight:800; letter-spacing:-.05em; }
+.metric-unit { color:var(--muted); font-size:10px; padding-bottom:3px; }
+.metric-trend { margin-top:8px; color:var(--green); font-size:9px; }
+.metric-trend.bad { color:var(--red); }
+
+.content-grid { display:grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, .78fr); gap:13px; }
+.content-grid.equal { grid-template-columns: 1fr 1fr; }
+.content-grid.triple { grid-template-columns: repeat(3, 1fr); }
+.stack { display:flex; flex-direction:column; gap:13px; min-width:0; }
+.glass-card { padding:16px; min-width:0; }
+.card-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:13px; }
+.card-title { font-size:12px; font-weight:800; letter-spacing:.01em; }
+.card-subtitle { font-size:9px; color:var(--muted); margin-top:3px; }
+.pill { border:1px solid var(--line); background:rgba(17,28,49,.45); padding:6px 8px; border-radius:999px; font-size:9px; color:var(--muted); }
+.pill.active { color:var(--cyan); border-color:rgba(31,244,237,.35); background:rgba(31,244,237,.09); }
+.segmented { display:flex; padding:4px; gap:4px; background:rgba(8,17,31,.42); border:1px solid var(--line); border-radius:13px; }
+.segmented button { border:0; background:transparent; color:var(--muted); border-radius:9px; padding:7px 9px; cursor:pointer; font-size:9px; }
+.segmented button.active { color:#09161e; background:var(--cyan); font-weight:800; box-shadow:0 0 14px rgba(31,244,237,.22); }
+
+.map-panel { min-height:390px; position:relative; overflow:hidden; padding:0; }
+.map-toolbar { position:absolute; z-index:4; top:13px; left:13px; display:flex; gap:7px; flex-wrap:wrap; max-width:75%; }
+.map-legend { position:absolute; z-index:4; left:14px; bottom:13px; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); background:rgba(8,14,29,.69); border-radius:13px; backdrop-filter:blur(9px); font-size:8px; color:var(--muted); }
+.legend-gradient { width:110px; height:7px; border-radius:99px; background:linear-gradient(90deg, #28e9ed, #9f5fff, #ff5fa8, #ff9b61); }
+.city-map {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(circle at 72% 17%, rgba(86,250,243,.15), transparent 24%),
+    linear-gradient(145deg, rgba(26, 44, 68, .75), rgba(11,19,35,.95));
+}
+.city-map::before {
+  content:""; position:absolute; inset:-20%; opacity:.28; transform:rotate(-8deg) scale(1.1);
+  background-image:
+    linear-gradient(32deg, transparent 49%, rgba(101,242,255,.13) 50%, transparent 51%),
+    linear-gradient(122deg, transparent 49%, rgba(101,242,255,.09) 50%, transparent 51%);
+  background-size:62px 62px;
+}
+.map-svg { position:absolute; inset:0; width:100%; height:100%; filter:drop-shadow(0 18px 30px rgba(0,0,0,.34)); }
+.district { cursor:pointer; transition:.23s ease; stroke:rgba(255,255,255,.17); stroke-width:1.4; }
+.district:hover { filter:brightness(1.28); transform:translateY(-2px); transform-box:fill-box; transform-origin:center; }
+.map-pin { cursor:pointer; filter:drop-shadow(0 0 8px rgba(255,255,255,.35)); }
+.map-floating-card { position:absolute; z-index:4; right:13px; top:13px; width:174px; border:1px solid var(--line); background:rgba(26,31,57,.76); border-radius:16px; padding:11px; backdrop-filter:blur(12px); }
+.map-floating-title { font-size:10px; font-weight:800; }
+.map-floating-value { font-size:21px; font-weight:900; margin-top:4px; color:var(--cyan); }
+.map-floating-meta { font-size:8px; color:var(--muted); margin-top:4px; line-height:1.5; }
+
+.terrain-panel { min-height: 280px; position:relative; overflow:hidden; }
+.terrain-svg { width:100%; height:100%; position:absolute; inset:0; }
+.terrain-overlay { position:absolute; inset:0; background:linear-gradient(180deg, rgba(74,52,118,.17), transparent 36%, rgba(5,11,20,.5)); pointer-events:none; }
+.terrain-label { position:absolute; left:18px; top:17px; z-index:2; }
+
+.radial-wrap { display:grid; place-items:center; min-height:155px; }
+.radial-gauge { width:136px; height:136px; border-radius:50%; display:grid; place-items:center; position:relative; background:conic-gradient(var(--gauge-color, var(--cyan)) calc(var(--gauge-value) * 1%), rgba(91,107,148,.21) 0); box-shadow:0 0 32px rgba(28,236,240,.12); }
+.radial-gauge::before { content:""; width:104px; height:104px; border-radius:50%; background:linear-gradient(145deg, rgba(45,56,92,.98), rgba(24,31,52,.98)); box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 25px rgba(0,0,0,.32); }
+.radial-center { position:absolute; text-align:center; }
+.radial-number { font-size:27px; font-weight:900; letter-spacing:-.05em; }
+.radial-label { font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:.13em; }
+
+.chart-svg { width:100%; height:150px; overflow:visible; }
+.chart-grid-line { stroke:rgba(171,212,255,.08); stroke-width:1; }
+.chart-line { fill:none; stroke:var(--cyan); stroke-width:3; filter:drop-shadow(0 0 6px rgba(31,244,237,.35)); }
+.chart-line.secondary { stroke:var(--pink); }
+.chart-area { fill:url(#areaGradient); opacity:.32; }
+.bar-grid { display:flex; align-items:flex-end; gap:7px; min-height:150px; padding-top:16px; }
+.bar-item { flex:1; min-width:8px; border-radius:7px 7px 2px 2px; background:linear-gradient(180deg, var(--cyan), rgba(113,82,255,.72)); box-shadow:0 0 10px rgba(31,244,237,.13); position:relative; transition:.25s; }
+.bar-item:hover { filter:brightness(1.25); }
+.bar-label { position:absolute; bottom:-17px; left:50%; transform:translateX(-50%); font-size:7px; color:var(--muted); white-space:nowrap; }
+
+.list { display:flex; flex-direction:column; gap:8px; }
+.list-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid rgba(178,216,255,.09); background:rgba(19,28,51,.37); border-radius:13px; transition:.2s; }
+.list-item:hover { border-color:rgba(31,244,237,.22); background:rgba(35,49,80,.46); }
+.list-dot { width:9px; height:9px; border-radius:50%; background:var(--cyan); box-shadow:0 0 9px currentColor; flex:0 0 auto; }
+.list-main { min-width:0; flex:1; }
+.list-title { font-size:10px; font-weight:750; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.list-meta { font-size:8px; color:var(--muted); margin-top:3px; }
+.list-value { font-size:10px; font-weight:800; color:var(--cyan); }
+.progress { height:7px; border-radius:99px; background:rgba(124,146,183,.16); overflow:hidden; }
+.progress > span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg, var(--cyan), var(--purple), var(--pink)); box-shadow:0 0 9px rgba(38,240,240,.22); }
+
+.form-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+.field label { display:block; color:var(--muted); font-size:8px; text-transform:uppercase; letter-spacing:.1em; margin:0 0 6px; font-weight:800; }
+.field input, .field select {
+  width:100%; height:39px; border-radius:12px; border:1px solid var(--line); background:rgba(16,24,43,.5); color:var(--text); padding:0 11px; outline:none;
+}
+.field input[type="range"] { padding:0; accent-color:var(--cyan); }
+.field select option { background:#17233b; }
+.switch-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(166,205,240,.07); }
+.switch { width:38px; height:21px; border-radius:99px; background:rgba(106,123,162,.27); padding:3px; cursor:pointer; border:1px solid var(--line); }
+.switch::after { content:""; display:block; width:13px; height:13px; border-radius:50%; background:#91a5b9; transition:.2s; }
+.switch.on { background:rgba(31,244,237,.2); border-color:rgba(31,244,237,.4); }
+.switch.on::after { transform:translateX(17px); background:var(--cyan); box-shadow:0 0 9px var(--cyan); }
+
+.right-rail {
+  border-left:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(22,31,54,.78), rgba(11,21,38,.75));
+  padding:22px 17px;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  overflow:auto;
+}
+.rail-section { border:1px solid var(--line); border-radius:20px; padding:14px; background:linear-gradient(145deg, rgba(63,65,101,.48), rgba(24,33,57,.66)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); }
+.rail-title { font-size:10px; font-weight:850; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+.weather-orb { display:flex; align-items:center; gap:13px; }
+.weather-icon { width:63px; height:63px; border-radius:21px; display:grid; place-items:center; font-size:29px; background:radial-gradient(circle at 36% 30%, #f0ffff, #8b72f5 43%, #303252 75%); box-shadow:0 0 24px rgba(105,224,255,.17); }
+.weather-temp { font-size:28px; font-weight:900; letter-spacing:-.06em; }
+.weather-meta { color:var(--muted); font-size:9px; line-height:1.5; }
+.alert-item { padding:10px; border:1px solid rgba(255,104,139,.15); border-radius:13px; background:rgba(255,77,139,.055); margin-bottom:8px; }
+.alert-head { display:flex; justify-content:space-between; gap:8px; font-size:9px; font-weight:800; }
+.alert-level { color:var(--pink); }
+.alert-text { color:var(--muted); font-size:8px; margin-top:5px; line-height:1.5; }
+
+.toast-stack { position:fixed; right:28px; top:24px; display:flex; flex-direction:column; gap:9px; z-index:99; }
+.toast { width:min(360px, calc(100vw - 56px)); border:1px solid rgba(69,242,255,.29); background:linear-gradient(145deg, rgba(53,62,101,.94), rgba(16,25,43,.96)); border-radius:16px; padding:12px 14px; box-shadow:0 18px 45px rgba(0,0,0,.38), 0 0 24px rgba(31,244,237,.08); animation:toastIn .28s ease; }
+.toast-title { font-size:10px; font-weight:850; color:var(--cyan); }
+.toast-message { font-size:9px; color:var(--muted); margin-top:4px; line-height:1.45; }
+@keyframes toastIn { from { opacity:0; transform:translateY(-9px) translateX(13px); } to { opacity:1; transform:none; } }
+
+.modal-backdrop { position:fixed; inset:0; background:rgba(2,8,16,.72); z-index:80; display:grid; place-items:center; padding:24px; backdrop-filter:blur(8px); }
+.modal { width:min(720px, 100%); max-height:88vh; overflow:auto; border:1px solid rgba(99,239,255,.24); border-radius:27px; background:linear-gradient(145deg, rgba(54,59,96,.98), rgba(17,27,48,.98)); box-shadow:0 32px 90px rgba(0,0,0,.55); padding:22px; }
+.modal h3 { margin:0 0 8px; }
+.modal p { color:var(--muted); font-size:11px; line-height:1.6; }
+.report-paper { background:#f7fbff; color:#142234; border-radius:14px; padding:20px; }
+.report-paper h2, .report-paper h3 { color:#17294a; }
+.report-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.report-metric { border:1px solid #dbe8f2; border-radius:10px; padding:10px; }
+.report-metric strong { display:block; color:#0d8c9d; font-size:18px; }
+.report-metric span { color:#597083; font-size:9px; }
+
+.empty { padding:28px; text-align:center; color:var(--muted); font-size:10px; border:1px dashed var(--line); border-radius:16px; }
+.tag-row { display:flex; flex-wrap:wrap; gap:7px; }
+.tag { font-size:8px; padding:6px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); cursor:pointer; }
+.tag.selected { color:#08181c; background:var(--cyan); border-color:var(--cyan); font-weight:800; }
+.kbd { border:1px solid var(--line); border-bottom-color:rgba(255,255,255,.22); border-radius:6px; padding:2px 5px; font-size:7px; color:var(--muted); background:rgba(255,255,255,.04); }
+
+@media (max-width: 1320px) {
+  .dashboard-frame { grid-template-columns:84px minmax(0,1fr); }
+  .right-rail { display:none; }
+}
+@media (max-width: 940px) {
+  .app-shell { padding:0; }
+  .dashboard-frame { min-height:100vh; border-radius:0; border:0; grid-template-columns:1fr; }
+  .sidebar { position:sticky; top:0; height:76px; flex-direction:row; overflow-x:auto; padding:8px 12px; border-right:0; border-bottom:1px solid var(--line); z-index:20; }
+  .brand-orb { flex:0 0 auto; width:52px; height:52px; margin:0 5px 0 0; }
+  .nav-scroll { flex-direction:row; overflow-x:auto; }
+  .nav-button { flex:0 0 55px; min-height:52px; }
+  .nav-button.active::before { left:50%; top:-8px; width:24px; height:3px; transform:translateX(-50%); border-radius:0 0 4px 4px; }
+  .sidebar-bottom { display:none; }
+  .main-area { padding:17px 14px 24px; }
+  .topbar, .module-header { align-items:flex-start; flex-direction:column; }
+  .top-controls, .action-row { margin-left:0; justify-content:flex-start; }
+  .metric-grid { grid-template-columns:repeat(2,1fr); }
+  .content-grid, .content-grid.equal, .content-grid.triple { grid-template-columns:1fr; }
+  .map-panel { min-height:350px; }
+}
+@media (max-width: 560px) {
+  .metric-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .metric-value { font-size:21px; }
+  .title-stack { min-width:0; }
+  .form-grid { grid-template-columns:1fr; }
+  .map-floating-card { width:145px; }
+  .report-grid { grid-template-columns:1fr; }
+}
+
+@media print {
+  body { background:white; color:black; }
+  .sidebar, .right-rail, .top-controls, .action-row, .toast-stack { display:none !important; }
+  .dashboard-frame { display:block; border:0; box-shadow:none; background:white; }
+  .main-area { padding:0; }
+  .glass-card, .metric-card { color:black; background:white; border:1px solid #ddd; box-shadow:none; }
+}
+
+</style>
+</head>
+<body>
+  <main class="app-shell">
+    <div id="toasts" class="toast-stack"></div>
+    <div class="dashboard-frame">
+      <aside class="sidebar">
+        <button id="brand" class="brand-orb">HG</button>
+        <div id="nav" class="nav-scroll"></div>
+        <div class="sidebar-bottom">
+          <button id="themeBtn" class="nav-button" title="Toggle atmosphere"><span class="nav-icon">◐</span></button>
+          <button id="reportBtnSide" class="nav-button" title="Generate report"><span class="nav-icon">⇩</span></button>
+        </div>
+      </aside>
+      <section class="main-area">
+        <div class="topbar">
+          <div class="title-stack"><div class="eyebrow">Urban Climate Intelligence OS</div><h1>HeatShield Genesis</h1></div>
+          <div class="top-controls">
+            <div class="control-chip"><span class="live-dot"></span> LIVE EO</div>
+            <select id="citySelect" class="select-control"><option>London</option><option>Manchester</option><option>Birmingham</option></select>
+            <input id="dateInput" class="date-control" type="date" value="2026-07-31" />
+            <button id="globalAnalysis" class="btn primary">Run Genesis Analysis</button>
+          </div>
+        </div>
+        <div id="module"></div>
+      </section>
+      <aside class="right-rail">
+        <div class="rail-section"><div class="rail-title">Live Conditions</div><div id="weather"></div></div>
+        <div class="rail-section"><div class="rail-title">City Resilience</div><div id="resilience"></div></div>
+        <div class="rail-section"><div class="rail-title">Active Alerts</div><div id="alertsRail"></div></div>
+        <div class="rail-section"><div class="rail-title">Quick Actions</div><div class="stack"><button class="btn primary" data-action="global-analysis">Refresh Models</button><button class="btn purple" data-action="open-simulator">Open Simulator</button><button class="btn" data-action="report">Generate Report</button><button class="btn" data-action="export">Export Snapshot</button></div></div>
+      </aside>
+    </div>
+    <div id="modalRoot"></div>
+  </main>
+  <script>
+(() => {
+  "use strict";
+
+  const modules = [
+    ["heat", "Genesis Heat", "◉", "Satellite heat intelligence and urban heat-island detection."],
+    ["equity", "Genesis Equity", "◌", "Climate vulnerability, inequality and priority-neighbourhood analysis."],
+    ["health", "Genesis Health", "✚", "Heat-health pressure, cooling-centre coverage and public-health alerts."],
+    ["buildings", "Genesis Buildings", "▥", "Building overheating risk and retrofit intervention modelling."],
+    ["energy", "Genesis Energy", "ϟ", "Cooling demand, peak-load stress and grid optimisation."],
+    ["water", "Genesis Water", "◒", "Drought, soil moisture, irrigation demand and water resilience."],
+    ["nature", "Genesis Nature", "⌁", "Green and blue infrastructure design with measurable cooling impact."],
+    ["simulator", "Genesis Simulator", "◇", "Multi-intervention scenario builder and climate adaptation simulator."],
+    ["forecast", "Genesis Forecast", "⌁", "Neighbourhood heat forecasting and early-warning workflows."],
+    ["infrastructure", "Genesis Infrastructure", "⌂", "Critical infrastructure exposure, stress tests and work orders."],
+    ["finance", "Genesis Finance", "£", "Climate investment portfolios, ROI and adaptation business cases."],
+    ["command", "Genesis Command", "✦", "Integrated resilience command centre, projects, tasks and reports."],
+  ];
+
+  const cityData = {
+    London: { temp: 31.8, score: 64, exposed: 482000, buildings: 1284, grid: 76, water: 58, lat: "51.5072° N", weather: "Severe heat watch" },
+    Manchester: { temp: 28.4, score: 72, exposed: 214000, buildings: 688, grid: 61, water: 66, lat: "53.4808° N", weather: "Elevated heat risk" },
+    Birmingham: { temp: 30.1, score: 68, exposed: 307000, buildings: 914, grid: 69, water: 62, lat: "52.4862° N", weather: "High daytime heat" },
+  };
+
+  const districtData = {
+    London: [
+      ["d1","Camden",78,67,21800,32,"70,72 205,42 247,106 184,171 80,157"],
+      ["d2","Westminster",87,73,16400,21,"205,42 352,78 335,166 247,106"],
+      ["d3","Southwark",92,81,28600,18,"184,171 247,106 335,166 300,258 168,250"],
+      ["d4","Hackney",84,76,24500,27,"352,78 477,116 456,204 335,166"],
+      ["d5","Lambeth",75,69,23500,35,"168,250 300,258 283,350 127,329"],
+      ["d6","Newham",90,85,31200,16,"335,166 456,204 421,302 300,258"],
+      ["d7","Greenwich",69,58,19800,44,"300,258 421,302 384,378 283,350"],
+    ],
+    Manchester: [
+      ["d1","City Centre",85,61,17200,19,"70,72 205,42 247,106 184,171 80,157"],
+      ["d2","Ancoats",82,70,14800,25,"205,42 352,78 335,166 247,106"],
+      ["d3","Hulme",73,77,23600,36,"184,171 247,106 335,166 300,258 168,250"],
+      ["d4","Salford",76,72,26000,31,"352,78 477,116 456,204 335,166"],
+      ["d5","Didsbury",61,42,18400,56,"168,250 300,258 283,350 127,329"],
+      ["d6","Ardwick",79,82,21300,23,"335,166 456,204 421,302 300,258"],
+      ["d7","Chorlton",64,46,19700,51,"300,258 421,302 384,378 283,350"],
+    ],
+    Birmingham: [
+      ["d1","Jewellery Quarter",81,62,15300,24,"70,72 205,42 247,106 184,171 80,157"],
+      ["d2","Eastside",88,74,20500,18,"205,42 352,78 335,166 247,106"],
+      ["d3","Balsall Heath",86,84,28800,22,"184,171 247,106 335,166 300,258 168,250"],
+      ["d4","Aston",83,80,26700,25,"352,78 477,116 456,204 335,166"],
+      ["d5","Edgbaston",65,44,19100,54,"168,250 300,258 283,350 127,329"],
+      ["d6","Small Heath",91,88,32400,15,"335,166 456,204 421,302 300,258"],
+      ["d7","Selly Oak",70,52,22200,43,"300,258 421,302 384,378 283,350"],
+    ],
+  };
+
+  const buildings = [
+    { name:"Riverside Towers", district:"Southwark", risk:88, roof:"Dark membrane", glass:62, indoor:31.4 },
+    { name:"St Anne Care Home", district:"Hackney", risk:93, roof:"Asphalt", glass:34, indoor:32.2 },
+    { name:"Genesis School", district:"Newham", risk:84, roof:"Metal deck", glass:48, indoor:30.8 },
+    { name:"Civic Data Centre", district:"Westminster", risk:79, roof:"Composite", glass:22, indoor:29.6 },
+  ];
+
+  const assetSeed = [
+    { id:1,name:"St Anne Hospital",type:"Hospital",risk:91,district:"Hackney",critical:true,inspected:false },
+    { id:2,name:"North Grid Substation",type:"Energy",risk:84,district:"Camden",critical:true,inspected:false },
+    { id:3,name:"Water Pump Station 04",type:"Water",risk:72,district:"Newham",critical:false,inspected:true },
+    { id:4,name:"Central Rail Junction",type:"Transport",risk:78,district:"Southwark",critical:true,inspected:false },
+    { id:5,name:"Civic Data Centre",type:"Data",risk:69,district:"Westminster",critical:false,inspected:true },
+  ];
+
+  const defaultState = {
+    active:"heat", city:"London", date:"2026-07-31", selectedDistrict:"d3", mapLayer:"Heat", period:"Day", view:"3D", analysisBoost:0,
+    equityWeights:{age:30,income:25,housing:25,green:20}, equityCompare:"d6",
+    centres:3, heatwave:3,
+    buildingIndex:0, buildingActions:[],
+    energy:{severity:3,solar:false,battery:false,demand:false,optimised:false},
+    waterModel:{drought:3,tank:false,irrigation:false,plants:false,plan:false},
+    natureType:"Tree", natureSize:3, interventions:[],
+    simulator:{preset:"Combined Climate Package",budget:2500000,target:2,running:false},
+    forecast:{days:7,risk:"Severe",ran:false},
+    infra:{selected:1,stress:3}, assets:assetSeed,
+    finance:{budget:5000000,selected:[1,2],optimised:false},
+    scenarios:[
+      { id:1,name:"Cool Roof District",intervention:"Cool roofs",budget:1800000,tempReduction:1.8,protectedPeople:34000,roi:2.8,status:"Completed" },
+      { id:2,name:"500 Trees",intervention:"Urban forestry",budget:950000,tempReduction:1.2,protectedPeople:27000,roi:3.4,status:"Draft" },
+    ],
+    tasks:[
+      { id:1,title:"Validate satellite heat layer",owner:"Data Team",due:"2026-08-02",status:"In progress" },
+      { id:2,title:"Review cooling-centre coverage",owner:"Public Health",due:"2026-08-03",status:"To do" },
+      { id:3,title:"Approve Cool Roof business case",owner:"Finance",due:"2026-08-05",status:"To do" },
+    ],
+    alerts:[
+      { id:1,level:"Critical",title:"Night heat persistence",text:"Southwark remains above 25°C for a third consecutive night." },
+      { id:2,level:"High",title:"Grid load approaching threshold",text:"Forecast peak demand is 11% above the seasonal baseline." },
+      { id:3,level:"High",title:"Care-home exposure",text:"Three care facilities require targeted cooling actions." },
+    ],
+  };
+
+  let state;
+  try { state = { ...defaultState, ...JSON.parse(localStorage.getItem("heatshield-genesis-state") || "{}") }; }
+  catch { state = structuredClone(defaultState); }
+
+  const $ = (sel) => document.querySelector(sel);
+  const compact = n => new Intl.NumberFormat("en",{notation:"compact",maximumFractionDigits:1}).format(n);
+  const money = n => new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP",maximumFractionDigits:0}).format(n);
+  const clamp = (n,min=0,max=100) => Math.max(min,Math.min(max,n));
+  const currentDistricts = () => districtData[state.city].map(d => ({id:d[0],name:d[1],heat:d[2],vulnerability:d[3],population:d[4],greenery:d[5],path:d[6]}));
+  const selectedDistrict = () => currentDistricts().find(d=>d.id===state.selectedDistrict) || currentDistricts()[0];
+  const save = () => { try { localStorage.setItem("heatshield-genesis-state", JSON.stringify(state)); } catch {} };
+
+  function toast(title,message) {
+    const id = Date.now() + Math.random();
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.dataset.id = id;
+    el.innerHTML = `<div class="toast-title">${title}</div><div class="toast-message">${message}</div>`;
+    $("#toasts").appendChild(el);
+    setTimeout(()=>el.remove(),3400);
+  }
+
+  function download(name, content, type="application/json") {
+    const blob = new Blob([content],{type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+  }
+
+  function metric(label,value,unit,trend,color="var(--cyan)",bad=false) {
+    return `<div class="metric-card" style="--metric-color:${color}"><div class="metric-label">${label}</div><div class="metric-main"><span class="metric-value">${value}</span>${unit?`<span class="metric-unit">${unit}</span>`:""}</div><div class="metric-trend ${bad?"bad":""}">${trend}</div></div>`;
+  }
+
+  function gauge(value,label,color="var(--cyan)") {
+    return `<div class="radial-wrap"><div class="radial-gauge" style="--gauge-value:${clamp(value)};--gauge-color:${color}"><div class="radial-center"><div class="radial-number">${Math.round(value)}</div><div class="radial-label">${label}</div></div></div></div>`;
+  }
+
+  function lineChart(values,secondary=[]) {
+    const width=520,height=150,pad=10,all=[...values,...secondary],min=Math.min(...all)-2,max=Math.max(...all)+2;
+    const pts=arr=>arr.map((v,i)=>`${pad+i*(width-2*pad)/(arr.length-1)},${height-pad-(v-min)*(height-2*pad)/(max-min||1)}`).join(" ");
+    const area=`${pad},${height-pad} ${pts(values)} ${width-pad},${height-pad}`;
+    return `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1ff4ed"/><stop offset="1" stop-color="#8d5cff" stop-opacity="0"/></linearGradient></defs>${[35,70,105].map(y=>`<line x1="0" y1="${y}" x2="${width}" y2="${y}" class="chart-grid-line"/>`).join("")}<polygon points="${area}" class="chart-area"/><polyline points="${pts(values)}" class="chart-line"/>${secondary.length?`<polyline points="${pts(secondary)}" class="chart-line secondary"/>`:""}</svg>`;
+  }
+
+  function bars(values,labels,max=Math.max(...values)) {
+    return `<div class="bar-grid">${values.map((v,i)=>`<div class="bar-item" style="height:${Math.max(7,v/max*130)}px" title="${labels[i]}: ${v}"><span class="bar-label">${labels[i]}</span></div>`).join("")}</div>`;
+  }
+
+  function header(title,description,actions="") {
+    return `<div class="module-header"><div class="module-title"><div class="eyebrow">HeatShield Genesis / Live Module</div><h2>${title}</h2><p>${description}</p></div><div class="action-row">${actions}</div></div>`;
+  }
+
+  function terrain(intensity=78,title="Urban thermal terrain") {
+    return `<div class="glass-card terrain-panel"><div class="terrain-label"><div class="eyebrow">Genesis Surface Model</div><div class="card-title">${title}</div></div><svg class="terrain-svg" viewBox="0 0 780 310" preserveAspectRatio="none"><defs><linearGradient id="mount1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67fff7"/><stop offset=".5" stop-color="#14bbd1"/><stop offset="1" stop-color="#222646"/></linearGradient><linearGradient id="mount2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0a7ff"/><stop offset=".48" stop-color="#8a5df8"/><stop offset="1" stop-color="#27213e"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="780" height="310" fill="#111a31"/>${[40,80,120,160,200,240].map(y=>`<path d="M0 ${y} Q180 ${y-35} 360 ${y+15} T780 ${y-10}" fill="none" stroke="rgba(87,242,255,.05)"/>`).join("")}<path d="M0 250 C80 213 112 135 185 149 C240 158 259 90 333 119 C390 143 421 208 487 183 C550 158 590 58 666 72 C725 83 748 147 780 159 L780 310 L0 310Z" fill="url(#mount1)" opacity=".92" filter="url(#glow)"/><path d="M0 274 C86 246 140 182 212 196 C270 207 318 152 367 170 C429 193 465 248 525 223 C579 200 636 130 690 151 C744 170 758 211 780 214 L780 310 L0 310Z" fill="url(#mount2)" opacity=".84"/><path d="M0 258 C88 220 122 146 188 159 C246 169 264 108 333 130 C395 150 421 218 487 195 C551 173 590 75 666 88 C723 99 744 156 780 170" fill="none" stroke="#9cfff8" stroke-width="2" opacity=".55"/><circle cx="646" cy="78" r="${8+intensity/18}" fill="#ff5fa8" opacity=".65" filter="url(#glow)"/></svg><div class="terrain-overlay"></div></div>`;
+  }
+
+  function cityMap(layer=state.mapLayer,interventions=state.interventions) {
+    const ds=currentDistricts(), sel=selectedDistrict();
+    const fill=d=>{const v=layer==="Vulnerability"?d.vulnerability:layer==="Greenery"?100-d.greenery:d.heat;return v>86?"#ff5f9d":v>76?"#a45fff":v>66?"#386de2":"#22d5d5"};
+    return `<div class="glass-card map-panel"><div class="city-map"><svg class="map-svg" viewBox="0 0 560 410"><defs><filter id="pinGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g transform="translate(18 7)">${ds.map(d=>`<polygon points="${d.path}" class="district" fill="${fill(d)}" opacity="${sel.id===d.id?.98:.58}" data-action="district" data-value="${d.id}"/>`).join("")}<path d="M45 212 C142 194 198 223 270 205 C347 186 426 224 507 199" fill="none" stroke="rgba(74,240,255,.62)" stroke-width="8" opacity=".36"/><path d="M45 212 C142 194 198 223 270 205 C347 186 426 224 507 199" fill="none" stroke="rgba(196,255,255,.72)" stroke-width="1.5"/>${[[270,145],[405,245],[170,285]].map((p,i)=>`<g class="map-pin" filter="url(#pinGlow)"><circle cx="${p[0]}" cy="${p[1]}" r="6" fill="${i===0?"#ff5fa8":"#1ff4ed"}"/><circle cx="${p[0]}" cy="${p[1]}" r="13" fill="none" stroke="${i===0?"#ff5fa8":"#1ff4ed"}" opacity=".4"/></g>`).join("")}${interventions.map((p,i)=>`<g transform="translate(${p.x} ${p.y})"><circle r="11" fill="#5df5a4" opacity=".28"/><circle r="5" fill="#5df5a4"/><text y="3" text-anchor="middle" font-size="7" fill="#05211a">+</text></g>`).join("")}</g></svg></div><div class="map-floating-card"><div class="map-floating-title">${sel.name}</div><div class="map-floating-value">${layer==="Vulnerability"?sel.vulnerability:layer==="Greenery"?sel.greenery:sel.heat}</div><div class="map-floating-meta">${layer} score<br/>${compact(sel.population)} residents · ${sel.greenery}% green cover</div></div><div class="map-legend"><span>Low</span><span class="legend-gradient"></span><span>Critical</span></div></div>`;
+  }
+
+  function renderNav() {
+    $("#nav").innerHTML=modules.map((m,i)=>`<button class="nav-button ${state.active===m[0]?"active":""}" data-action="module" data-value="${m[0]}" title="${m[1]}"><span class="nav-icon">${m[2]}</span><span class="nav-index">${String(i+1).padStart(2,"0")}</span></button>`).join("");
+  }
+
+  function renderRail() {
+    const c=cityData[state.city];
+    $("#weather").innerHTML=`<div class="weather-orb"><div class="weather-icon">☁</div><div><div class="weather-temp">${(c.temp+state.analysisBoost*.1).toFixed(1)}°</div><div class="weather-meta">${c.weather}<br/>${c.lat}</div></div></div>`;
+    $("#resilience").innerHTML=`${gauge(c.score+state.analysisBoost,"Genesis score")}<div class="progress"><span style="width:${c.score+state.analysisBoost}%"></span></div>`;
+    $("#alertsRail").innerHTML=state.alerts.slice(0,3).map(a=>`<div class="alert-item"><div class="alert-head"><span>${a.title}</span><span class="alert-level">${a.level}</span></div><div class="alert-text">${a.text}</div></div>`).join("");
+  }
+
+  function renderHeat() {
+    const c=cityData[state.city],d=selectedDistrict();
+    const series=[27,28,29,31,33,34,35,34,32,31,33,35].map((v,i)=>v+(state.city==="London"?1:state.city==="Birmingham"?.4:-1)+(state.period==="Night"?-5:0)+state.analysisBoost*.1+i%3*.2);
+    return `${header("Genesis Heat","Earth-observation heat intelligence, historical trend analysis and street-level urban heat-island detection.",`<button class="btn" data-action="export">Export Map</button><button class="btn purple" data-action="report">Heat Report</button><button class="btn primary" data-action="heat-scan">Run Heat Scan</button>`)}<div class="metric-grid">${metric("Surface Temperature",(c.temp+d.heat/22).toFixed(1),"°C","+3.8°C above baseline","var(--pink)",true)}${metric("Heat Island Intensity",(d.heat/21).toFixed(1),"°C","Top 8% of urban districts","var(--purple)",true)}${metric("Exposed Population",compact(c.exposed),"","42,800 high-priority residents","var(--orange)")}${metric("EO Confidence",94+state.analysisBoost,"%","Sentinel + Landsat fusion","var(--cyan)")}</div><div class="content-grid"><div class="stack"><div style="position:relative"><div class="map-toolbar"><div class="segmented">${["Heat","Vulnerability","Greenery"].map(x=>`<button class="${state.mapLayer===x?"active":""}" data-action="map-layer" data-value="${x}">${x}</button>`).join("")}</div><div class="segmented">${["Day","Night"].map(x=>`<button class="${state.period===x?"active":""}" data-action="period" data-value="${x}">${x}</button>`).join("")}</div><div class="segmented">${["Satellite","Street","3D"].map(x=>`<button class="${state.view===x?"active":""}" data-action="view" data-value="${x}">${x}</button>`).join("")}</div></div>${cityMap()}</div>${terrain(d.heat)}</div><div class="stack"><div class="glass-card"><div class="card-header"><div><div class="card-title">24-hour Thermal Curve</div><div class="card-subtitle">Selected district · ${d.name}</div></div><span class="pill active">${state.period}</span></div>${lineChart(series)}</div><div class="glass-card"><div class="card-header"><div><div class="card-title">Heat Intelligence Controls</div><div class="card-subtitle">Modify processing assumptions</div></div><span class="pill">${state.view}</span></div><div class="field"><label>Heat intensity threshold · ${state.heatIntensity||78}</label><input type="range" min="40" max="100" value="${state.heatIntensity||78}" data-input="heat-intensity"/></div>${["Surface material correction","Building shadow model","Night-time persistence","Cloud-mask refinement"].map((x,i)=>`<div class="switch-row"><span class="list-title">${x}</span><span class="switch ${i!==1?"on":""}" data-action="visual-switch"></span></div>`).join("")}</div><div class="glass-card"><div class="card-header"><div class="card-title">Priority Hotspots</div><span class="pill">Ranked</span></div><div class="list">${[...currentDistricts()].sort((a,b)=>b.heat-a.heat).slice(0,4).map((x,i)=>`<div class="list-item" data-action="district" data-value="${x.id}"><span class="list-dot" style="background:${i===0?"var(--pink)":i===1?"var(--purple)":"var(--cyan)"}"></span><div class="list-main"><div class="list-title">${x.name}</div><div class="list-meta">${compact(x.population)} residents · ${x.greenery}% green cover</div></div><span class="list-value">${x.heat}</span></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderEquity() {
+    const ranked=currentDistricts().map(d=>({...d,score:Math.round(d.vulnerability*.65+d.heat*.22+(100-d.greenery)*.13)})).sort((a,b)=>b.score-a.score),sel=ranked.find(d=>d.id===state.selectedDistrict)||ranked[0],comp=ranked.find(d=>d.id===state.equityCompare)||ranked[1];
+    return `${header("Genesis Equity","Climate-equity modelling that combines heat, demographics, housing quality and access to cooling resources.",`<button class="btn" data-action="equity-export">Export Priority List</button><button class="btn primary" data-action="equity-calc">Recalculate Equity</button>`)}<div class="metric-grid">${metric("Priority Population",compact(ranked.slice(0,3).reduce((s,d)=>s+d.population,0)),"","Across top three districts","var(--pink)")}${metric("Equity Gap","31","pts","Highest vs lowest district","var(--purple)",true)}${metric("Low Cooling Access","38","%","Estimated households","var(--orange)",true)}${metric("Model Confidence","89","%","7 integrated indicators","var(--cyan)")}</div><div class="content-grid"><div class="stack">${cityMap("Vulnerability",[])}<div class="glass-card"><div class="card-header"><div><div class="card-title">Neighbourhood Comparison</div><div class="card-subtitle">Compare vulnerability drivers</div></div><select class="select-control" data-input="equity-compare">${ranked.filter(d=>d.id!==sel.id).map(d=>`<option value="${d.id}" ${d.id===state.equityCompare?"selected":""}>${d.name}</option>`).join("")}</select></div><div class="content-grid equal"><div><div class="card-title">${sel.name}</div>${bars([sel.heat,sel.vulnerability,100-sel.greenery,sel.score],["Heat","Social","Green gap","Total"])}</div><div><div class="card-title">${comp.name}</div>${bars([comp.heat,comp.vulnerability,100-comp.greenery,comp.score],["Heat","Social","Green gap","Total"])}</div></div></div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Equity Weighting</div><span class="pill active">Custom model</span></div>${Object.entries(state.equityWeights).map(([k,v])=>`<div class="field"><label>${k} · ${v}%</label><input type="range" min="0" max="50" value="${v}" data-input="equity-weight" data-key="${k}"/></div>`).join("")}</div><div class="glass-card"><div class="card-header"><div class="card-title">Priority Ranking</div><span class="pill">Live</span></div><div class="list">${ranked.map((d,i)=>`<div class="list-item" data-action="district" data-value="${d.id}"><span class="list-dot" style="background:${i<2?"var(--pink)":i<4?"var(--purple)":"var(--cyan)"}"></span><div class="list-main"><div class="list-title">#${i+1} ${d.name}</div><div class="list-meta">${compact(d.population)} residents · vulnerability ${d.vulnerability}</div></div><span class="list-value">${d.score}</span></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderHealth() {
+    const coverage=clamp(42+state.centres*9-state.heatwave*2),visits=Math.round(118+state.heatwave*37-state.centres*5);
+    return `${header("Genesis Health","Predict heat-related health pressure, identify vulnerable facilities and optimise cooling-centre coverage.",`<button class="btn" data-action="centre-add">Add Cooling Centre</button><button class="btn pink" data-action="health-alert">Generate Health Alert</button><button class="btn primary" data-action="health-coverage">Calculate Coverage</button>`)}<div class="metric-grid">${metric("Health Pressure",68+state.heatwave*5,"/100","Severe scenario","var(--pink)",true)}${metric("Estimated Visits",visits,"","Heat-related emergency visits","var(--orange)",true)}${metric("Cooling Coverage",coverage,"%",`${state.centres} active centres`,"var(--cyan)")}${metric("High-risk Facilities",5+state.heatwave,"","Care, school and clinical sites","var(--purple)",true)}</div><div class="content-grid"><div class="stack">${cityMap("Vulnerability",Array.from({length:state.centres},(_,i)=>({x:150+i*70,y:140+(i%2)*105,type:"Cooling Centre"})))}<div class="glass-card"><div class="card-header"><div><div class="card-title">Health Demand Forecast</div><div class="card-subtitle">Estimated service pressure under selected heatwave</div></div><span class="pill active">Level ${state.heatwave}</span></div>${lineChart([44,48,53,61,76,84,visits/1.5,92,79,67,58,51],[39,41,43,47,55,61,65,68,62,54,48,44])}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Heatwave Scenario</div><span class="pill">Level ${state.heatwave}</span></div><div class="field"><label>Severity · ${state.heatwave}/5</label><input type="range" min="1" max="5" value="${state.heatwave}" data-input="heatwave"/></div>${gauge(coverage,"coverage","var(--green)")}<div class="action-row"><button class="btn small" data-action="centre-remove">Remove Centre</button><button class="btn small primary" data-action="centre-add">Add Centre</button></div></div><div class="glass-card"><div class="card-header"><div class="card-title">Facility Priority</div><span class="pill">8 assets</span></div><div class="list">${["St Anne Care Home","Genesis Primary School","Southbank Clinic","Riverside Housing","Civic Cooling Hub"].map((x,i)=>`<div class="list-item"><span class="list-dot" style="background:${i<2?"var(--pink)":"var(--cyan)"}"></span><div class="list-main"><div class="list-title">${x}</div><div class="list-meta">Risk ${92-i*7} · response window ${2+i}h</div></div><button class="btn small" data-action="facility-action" data-value="${x}">Action</button></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderBuildings() {
+    const b=buildings[state.buildingIndex],defs=[{name:"Cool Roof",temp:.9,energy:11,cost:85000},{name:"Green Roof",temp:.7,energy:6,cost:142000},{name:"External Shade",temp:.6,energy:8,cost:56000},{name:"Night Ventilation",temp:.5,energy:5,cost:22000},{name:"Insulation",temp:.4,energy:9,cost:98000}],selected=defs.filter(a=>state.buildingActions.includes(a.name)),drop=selected.reduce((s,a)=>s+a.temp,0),energy=selected.reduce((s,a)=>s+a.energy,0),cost=selected.reduce((s,a)=>s+a.cost,0);
+    const buildingSvg=`<div class="glass-card terrain-panel" style="min-height:390px"><div class="terrain-label"><div class="eyebrow">3D Building Thermal Scan</div><div class="card-title">${b.name}</div></div><svg class="terrain-svg" viewBox="0 0 780 390"><defs><linearGradient id="bld" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#55f7ee"/><stop offset=".45" stop-color="#5e73ed"/><stop offset="1" stop-color="#492458"/></linearGradient><filter id="glowB"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="780" height="390" fill="#111a30"/><path d="M50 314 L350 184 L715 281 L400 367Z" fill="#19253e" stroke="#4ceae9" opacity=".85"/><g transform="translate(205 62)" filter="url(#glowB)"><path d="M0 84 L214 0 L412 69 L198 158Z" fill="#8072ff"/><path d="M0 84 L198 158 L198 294 L0 221Z" fill="url(#bld)"/><path d="M198 158 L412 69 L412 205 L198 294Z" fill="#243451"/>${[30,70,110,150].map(y=>`<g>${[30,78,126].map(x=>`<rect x="${x}" y="${y+72}" width="27" height="18" rx="3" fill="#9afff7" opacity=".65"/>`).join("")}${[235,283,331].map(x=>`<rect x="${x}" y="${y+47}" width="27" height="18" rx="3" fill="#ff76b7" opacity=".4"/>`).join("")}</g>`).join("")}</g>${state.buildingActions.includes("Green Roof")?`<path d="M205 146 L419 62 L617 131 L403 220Z" fill="#5df5a4" opacity=".55"/>`:""}${state.buildingActions.includes("Cool Roof")?`<path d="M205 146 L419 62 L617 131 L403 220Z" fill="#c8ffff" opacity=".65"/>`:""}</svg></div>`;
+    return `${header("Genesis Buildings","Building-level overheating intelligence with interactive retrofit design and before/after performance analysis.",`<button class="btn" data-action="building-reset">Reset Retrofit</button><button class="btn purple" data-action="building-scan">Run Building Scan</button><button class="btn primary" data-action="building-save">Save Retrofit</button>`)}<div class="metric-grid">${metric("Overheating Risk",clamp(b.risk-selected.length*7),"/100",selected.length?`-${selected.length*7} points after retrofit`:"Critical baseline","var(--pink)",!selected.length)}${metric("Peak Indoor Temp",(b.indoor-drop).toFixed(1),"°C",`-${drop.toFixed(1)}°C modelled`,"var(--cyan)")}${metric("Energy Reduction",energy,"%","Annual cooling estimate","var(--green)")}${metric("Retrofit Cost",money(cost),"","Concept-level estimate","var(--purple)")}</div><div class="content-grid"><div class="stack">${buildingSvg}<div class="glass-card"><div class="card-header"><div><div class="card-title">Before / After Thermal Performance</div><div class="card-subtitle">Hourly indoor temperature</div></div><span class="pill active">Live model</span></div>${lineChart([25,25,26,28,30,31,32,33,32,30,29,27],[25,25,25.5,26,27,28,29-drop*.3,29-drop*.5,28,27,26,25.5])}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Select Building</div><span class="pill">4 assets</span></div><div class="list">${buildings.map((x,i)=>`<div class="list-item" data-action="building-select" data-value="${i}" style="border-color:${i===state.buildingIndex?"rgba(31,244,237,.42)":""}"><span class="list-dot" style="background:${x.risk>88?"var(--pink)":"var(--purple)"}"></span><div class="list-main"><div class="list-title">${x.name}</div><div class="list-meta">${x.district} · ${x.roof} · glazing ${x.glass}%</div></div><span class="list-value">${x.risk}</span></div>`).join("")}</div></div><div class="glass-card"><div class="card-header"><div class="card-title">Retrofit Interventions</div><span class="pill active">${state.buildingActions.length} selected</span></div><div class="list">${defs.map(a=>`<div class="list-item" data-action="building-action" data-value="${a.name}"><span class="switch ${state.buildingActions.includes(a.name)?"on":""}"></span><div class="list-main"><div class="list-title">${a.name}</div><div class="list-meta">-${a.temp}°C · -${a.energy}% energy · ${money(a.cost)}</div></div></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderEnergy() {
+    const e=state.energy,c=cityData[state.city],reduction=(e.solar?7:0)+(e.battery?8:0)+(e.demand?10:0)+(e.optimised?8:0),stress=clamp(c.grid+e.severity*5-reduction),savings=(e.solar?210000:0)+(e.battery?165000:0)+(e.demand?130000:0)+(e.optimised?90000:0);
+    return `${header("Genesis Energy","Model cooling demand, grid stress, distributed energy and demand-response interventions during extreme heat.",`<button class="btn" data-action="energy-reset">Reset</button><button class="btn purple" data-action="energy-sim">Simulate Heatwave</button><button class="btn primary" data-action="energy-opt">Optimise Grid</button>`)}<div class="metric-grid">${metric("Grid Stress",stress,"/100",reduction?`-${reduction} points through interventions`:"Approaching peak threshold","var(--pink)",stress>78)}${metric("Peak Demand",(1.4+e.severity*.18-reduction/100).toFixed(2),"GW","17:00–20:00 peak window","var(--purple)")}${metric("Flexible Capacity",e.demand?"184":"42","MW",e.demand?"Demand response active":"Limited flexibility","var(--cyan)")}${metric("Annual Savings",money(savings),"","Modelled portfolio benefit","var(--green)")}</div><div class="content-grid"><div class="stack"><div class="glass-card"><div class="card-header"><div><div class="card-title">Heat-Driven Electricity Demand</div><div class="card-subtitle">Baseline versus optimised demand</div></div><span class="pill active">Live dispatch</span></div>${lineChart([48,45,44,46,52,63,76,89,96,92,81,66,57],[47,44,43,45,49,57,65,72-reduction/8,78-reduction/7,73-reduction/7,66,56,50])}</div>${terrain(stress,"Grid load terrain")}</div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Heatwave Severity</div><span class="pill">Level ${e.severity}</span></div><div class="field"><label>Scenario severity</label><input type="range" min="1" max="5" value="${e.severity}" data-input="energy-severity"/></div>${gauge(stress,"grid stress",stress>80?"var(--pink)":"var(--cyan)")}</div><div class="glass-card"><div class="card-header"><div class="card-title">Energy Interventions</div><span class="pill active">Interactive</span></div>${[["Add Solar","solar"],["Add Battery","battery"],["Demand Response","demand"],["AI Load Shifting","optimised"]].map(x=>`<div class="switch-row"><span class="list-title">${x[0]}</span><span class="switch ${e[x[1]]?"on":""}" data-action="energy-toggle" data-value="${x[1]}"></span></div>`).join("")}</div><div class="glass-card"><div class="card-title">District Load</div>${bars([78,92,68,84,61,88,72].map(v=>Math.max(20,v-reduction/2)),["CAM","WES","LAM","HAC","GRE","NEW","SOU"])}</div></div></div>`;
+  }
+
+  function renderWater() {
+    const w=state.waterModel,c=cityData[state.city],reduction=(w.tank?9:0)+(w.irrigation?13:0)+(w.plants?7:0)+(w.plan?6:0),stress=clamp(c.water+w.drought*7-reduction),demand=Math.round(184+w.drought*29-reduction*2.5);
+    return `${header("Genesis Water","Monitor drought, soil moisture, vegetation stress and urban water demand while testing resilience interventions.",`<button class="btn" data-action="water-reset">Reset</button><button class="btn purple" data-action="water-sim">Run Drought Simulation</button><button class="btn primary" data-action="water-plan">Generate Water Plan</button>`)}<div class="metric-grid">${metric("Water Stress",stress,"/100",reduction?`-${reduction} intervention points`:"Rising drought pressure","var(--pink)",stress>75)}${metric("Daily Demand",demand,"ML","Urban and irrigation use","var(--purple)")}${metric("Soil Moisture",clamp(62-w.drought*8+reduction/3),"%","Median green-space condition","var(--cyan)")}${metric("Vegetation at Risk",clamp(18+w.drought*12-reduction),"%","Trees and urban planting","var(--orange)",true)}</div><div class="content-grid"><div class="stack">${terrain(stress,"Soil moisture and vegetation stress")}<div class="glass-card"><div class="card-header"><div class="card-title">14-day Water Demand</div><span class="pill active">Forecast</span></div>${lineChart([142,148,151,160,176,185,demand*.9,demand,demand*.96,183,172,164,158,151])}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Drought Scenario</div><span class="pill">Level ${w.drought}</span></div><div class="field"><label>Drought severity</label><input type="range" min="1" max="5" value="${w.drought}" data-input="water-drought"/></div>${gauge(stress,"water stress",stress>80?"var(--pink)":"var(--cyan)")}</div><div class="glass-card"><div class="card-header"><div class="card-title">Resilience Actions</div><span class="pill active">${[w.tank,w.irrigation,w.plants,w.plan].filter(Boolean).length} active</span></div>${[["Rainwater storage","tank"],["Smart irrigation","irrigation"],["Drought-tolerant planting","plants"],["Integrated district plan","plan"]].map(x=>`<div class="switch-row"><span class="list-title">${x[0]}</span><span class="switch ${w[x[1]]?"on":""}" data-action="water-toggle" data-value="${x[1]}"></span></div>`).join("")}</div><div class="glass-card"><div class="card-title">Irrigation Priority</div><div class="list">${["Civic Park","Southbank Trees","School Greenway","Riverside Planting"].map((n,i)=>`<div class="list-item"><span class="list-dot" style="background:${i<2?"var(--pink)":"var(--cyan)"}"></span><div class="list-main"><div class="list-title">${n}</div><div class="list-meta">Moisture ${22+i*8}% · priority ${i+1}</div></div></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderNature() {
+    const types=["Tree","Pocket Park","Green Roof","Rain Garden","Bioswale","Shade Corridor"],cooling=+(state.interventions.length*.12*state.natureSize).toFixed(1),people=state.interventions.length*2400*state.natureSize,runoff=state.interventions.length*340*state.natureSize;
+    return `${header("Genesis Nature","Design nature-based cooling infrastructure and calculate temperature, biodiversity, runoff and population benefits.",`<button class="btn danger" data-action="nature-clear">Clear All</button><button class="btn purple" data-action="nature-calc">Calculate Impact</button><button class="btn primary" data-action="nature-add">Add Intervention</button>`)}<div class="metric-grid">${metric("Cooling Benefit",cooling,"°C","Local modelled reduction","var(--cyan)")}${metric("People Benefiting",compact(people),"","Within intervention catchments","var(--green)")}${metric("Runoff Managed",compact(runoff),"m³","Annual indicative capacity","var(--purple)")}${metric("Carbon Benefit",Math.round(state.interventions.length*18*state.natureSize),"tCO₂e","20-year indicative benefit","var(--orange)")}</div><div class="content-grid"><div class="stack">${cityMap("Greenery",state.interventions)}<div class="glass-card"><div class="card-header"><div class="card-title">Nature Portfolio Impact</div><span class="pill active">${state.interventions.length} projects</span></div>${bars([cooling*20,Math.min(100,people/1200),Math.min(100,runoff/200),Math.min(100,state.interventions.length*state.natureSize*8)],["Cooling","People","Runoff","Biodiversity"],100)}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Intervention Palette</div><span class="pill">Placement tool</span></div><div class="tag-row">${types.map(t=>`<button class="tag ${state.natureType===t?"selected":""}" data-action="nature-type" data-value="${t}">${t}</button>`).join("")}</div><div class="field" style="margin-top:16px"><label>Intervention scale · ${state.natureSize}</label><input type="range" min="1" max="5" value="${state.natureSize}" data-input="nature-size"/></div><button class="btn primary" style="width:100%;margin-top:10px" data-action="nature-add">Place ${state.natureType}</button></div><div class="glass-card"><div class="card-header"><div class="card-title">Placed Projects</div><span class="pill active">Saved locally</span></div>${state.interventions.length===0?`<div class="empty">No interventions yet. Choose a type and place it on the map.</div>`:`<div class="list">${state.interventions.map((p,i)=>`<div class="list-item"><span class="list-dot" style="background:var(--green)"></span><div class="list-main"><div class="list-title">${p.type} #${i+1}</div><div class="list-meta">Cooling ${(0.1*state.natureSize).toFixed(1)}°C · impact radius ${40+state.natureSize*15}m</div></div><button class="btn small danger" data-action="nature-remove" data-value="${i}">Remove</button></div>`).join("")}</div>`}</div></div></div>`;
+  }
+
+  const simPresets={"500 Trees":{factor:.65,people:27000,roi:3.4},"Cool Roof District":{factor:.9,people:34000,roi:2.8},"Shaded Streets":{factor:.52,people:19000,roi:2.4},"New Urban Park":{factor:.74,people:23000,roi:2.1},"Permeable Neighbourhood":{factor:.38,people:16000,roi:1.9},"Combined Climate Package":{factor:1.25,people:58000,roi:3.1}};
+  function simMetrics() { const s=state.simulator,p=simPresets[s.preset],temp=+(Math.min(s.target,p.factor*(s.budget/1500000)).toFixed(1)),people=Math.round(p.people*(s.budget/1800000)),roi=+(p.roi*(1+(s.target-temp)*-.05)).toFixed(1);return {temp,people,roi}; }
+  function renderSimulator() {
+    const s=state.simulator,m=simMetrics();
+    return `${header("Genesis Simulator","Build, run, compare and optimise multi-intervention urban climate adaptation scenarios.",`<button class="btn" data-action="sim-reset">Reset</button><button class="btn purple" data-action="sim-opt">Optimise</button><button class="btn primary" data-action="sim-run">${s.running?"Running…":"Run Simulation"}</button>`)}<div class="metric-grid">${metric("Temperature Reduction",m.temp,"°C",`${Math.round(m.temp/s.target*100)}% of target`,"var(--cyan)")}${metric("Protected Population",compact(m.people),"","Residents within impact area","var(--green)")}${metric("Scenario Cost",money(s.budget),"","Concept-level capital estimate","var(--purple)")}${metric("Adaptation ROI",m.roi,"x","Benefits over 20 years","var(--orange)")}</div><div class="content-grid"><div class="stack">${terrain(Math.min(100,m.temp*35),"Scenario impact terrain")}<div class="glass-card"><div class="card-header"><div><div class="card-title">Simulation Timeline</div><div class="card-subtitle">Temperature reduction over implementation phases</div></div><span class="pill ${s.running?"active":""}">${s.running?"Processing":"Ready"}</span></div>${lineChart([0,.1,.2,.35,.55,.75,1,1.2,m.temp*.75,m.temp*.88,m.temp*.95,m.temp])}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Scenario Builder</div><span class="pill active">Interactive</span></div><div class="field"><label>Scenario preset</label><select data-input="sim-preset">${Object.keys(simPresets).map(x=>`<option ${s.preset===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="field"><label>Budget · ${money(s.budget)}</label><input type="range" min="500000" max="6000000" step="100000" value="${s.budget}" data-input="sim-budget"/></div><div class="field"><label>Cooling target · ${s.target.toFixed(1)}°C</label><input type="range" min=".5" max="4" step=".1" value="${s.target}" data-input="sim-target"/></div><div class="action-row" style="margin-top:10px"><button class="btn" data-action="sim-duplicate">Duplicate Last</button><button class="btn primary" data-action="sim-save">Save Scenario</button></div></div><div class="glass-card"><div class="card-header"><div class="card-title">Saved Scenarios</div><span class="pill">${state.scenarios.length}</span></div><div class="list">${state.scenarios.slice(0,5).map(x=>`<div class="list-item"><span class="list-dot" style="background:${x.status==="Approved"?"var(--green)":"var(--cyan)"}"></span><div class="list-main"><div class="list-title">${x.name}</div><div class="list-meta">${x.tempReduction}°C · ${money(x.budget)} · ROI ${x.roi}x</div></div><button class="btn small danger" data-action="sim-delete" data-value="${x.id}">Delete</button></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderForecast() {
+    const f=state.forecast,c=cityData[state.city],base=[29,31,33,35,34,32,30,29,31,34,36,35,33,31],values=base.slice(0,f.days).map((x,i)=>x+(c.temp-30)*.35+(f.ran?Math.sin(i)*.6:0)),secondary=values.map((v,i)=>v-8-(i%2)*.15);
+    return `${header("Genesis Forecast","Neighbourhood-scale heat forecasting, probability analysis and coordinated early-warning actions.",`<button class="btn" data-action="forecast-reset">Reset Forecast</button><button class="btn pink" data-action="forecast-alert">Create Warning</button><button class="btn primary" data-action="forecast-run">Run Forecast</button>`)}<div class="metric-grid">${metric("Peak Temperature",Math.max(...values).toFixed(1),"°C",`Within next ${f.days} days`,"var(--pink)",true)}${metric("Heatwave Probability",Math.min(96,56+f.days*4),"%","Persistent high-pressure signal","var(--purple)",true)}${metric("Hot Nights",Math.max(1,Math.round(f.days*.43)),"","Night temperature above 22°C","var(--orange)",true)}${metric("Alert Readiness",state.alerts.length?84:49,"%",`${state.alerts.length} operational alerts`,"var(--cyan)")}</div><div class="content-grid"><div class="stack"><div class="glass-card"><div class="card-header"><div><div class="card-title">Temperature Forecast</div><div class="card-subtitle">Daily maximum and night-time minimum</div></div><div class="segmented">${[3,7,14].map(n=>`<button class="${f.days===n?"active":""}" data-action="forecast-days" data-value="${n}">${n}D</button>`).join("")}</div></div>${lineChart(values,secondary)}</div><div class="glass-card"><div class="card-header"><div class="card-title">Hourly Heat Risk</div><span class="pill active">Next severe day</span></div>${bars([22,21,21,22,24,27,30,33,35,36,35,33,31,29,27,25],["00","02","04","06","08","10","12","14","16","18","20","22","24","02","04","06"])}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Warning Composer</div><span class="pill">Operational</span></div><div class="field"><label>Warning level</label><select data-input="forecast-risk">${["Elevated","High","Severe","Critical"].map(x=>`<option ${f.risk===x?"selected":""}>${x}</option>`).join("")}</select></div>${["Notify public health","Notify energy operator","Publish district bulletin"].map((x,i)=>`<div class="switch-row"><span class="list-title">${x}</span><span class="switch ${i<2?"on":""}" data-action="visual-switch"></span></div>`).join("")}<button class="btn pink" style="width:100%;margin-top:12px" data-action="forecast-alert">Issue ${f.risk} Warning</button></div><div class="glass-card"><div class="card-header"><div class="card-title">Alert Timeline</div><span class="pill active">${state.alerts.length} active</span></div><div class="list">${state.alerts.slice(0,5).map(a=>`<div class="list-item"><span class="list-dot" style="background:${a.level==="Critical"?"var(--pink)":"var(--purple)"}"></span><div class="list-main"><div class="list-title">${a.title}</div><div class="list-meta">${a.level} · ${a.text}</div></div><button class="btn small" data-action="alert-resolve" data-value="${a.id}">Resolve</button></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderInfrastructure() {
+    const a=state.assets.find(x=>x.id===state.infra.selected)||state.assets[0],risk=clamp(a.risk+state.infra.stress*3-(a.inspected?5:0));
+    const assetSvg=`<div class="glass-card terrain-panel" style="min-height:390px"><div class="terrain-label"><div class="eyebrow">Critical Asset Network</div><div class="card-title">${a.name}</div></div><svg class="terrain-svg" viewBox="0 0 780 390"><rect width="780" height="390" fill="#111a30"/><g stroke="#4deeee" stroke-width="2" opacity=".45">${[[120,120,320,88],[320,88,560,132],[120,120,210,275],[320,88,390,260],[560,132,650,270],[210,275,390,260],[390,260,650,270]].map(l=>`<line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}"/>`).join("")}</g>${state.assets.map((x,i)=>{const p=[[120,120],[320,88],[560,132],[210,275],[390,260]][i];return `<g transform="translate(${p[0]} ${p[1]})" data-action="asset-select" data-value="${x.id}" style="cursor:pointer"><circle r="${a.id===x.id?31:24}" fill="${x.risk>85?"#ff5fa8":"#7064ef"}" opacity=".22"/><circle r="${a.id===x.id?17:12}" fill="${x.risk>85?"#ff5fa8":"#1ff4ed"}"/><text y="4" text-anchor="middle" font-size="9" fill="#06151d" font-weight="800">${x.type[0]}</text></g>`}).join("")}</svg></div>`;
+    return `${header("Genesis Infrastructure","Stress-test critical urban assets, prioritise inspections and create operational resilience work orders.",`<button class="btn" data-action="asset-inspect">Inspect Asset</button><button class="btn purple" data-action="asset-work">Create Work Order</button><button class="btn primary" data-action="asset-stress">Run Stress Test</button>`)}<div class="metric-grid">${metric("Critical Assets",state.assets.filter(x=>x.critical).length,"","Require executive oversight","var(--pink)")}${metric("Selected Asset Risk",risk,"/100",a.inspected?"Inspection data included":"Inspection overdue","var(--orange)",risk>80)}${metric("Potential Disruption",Math.round(risk*.84),"%","Scenario-based probability","var(--purple)",true)}${metric("Open Work Orders",state.assets.filter(x=>!x.inspected).length+1,"","Across heat-exposed assets","var(--cyan)")}</div><div class="content-grid"><div class="stack">${assetSvg}<div class="glass-card"><div class="card-header"><div class="card-title">Asset Stress Profile</div><span class="pill active">Level ${state.infra.stress}</span></div>${lineChart([32,38,44,51,61,72,risk,risk-4,74,65,57,49])}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Stress Test Settings</div><span class="pill">Interactive</span></div><div class="field"><label>Heat event severity · ${state.infra.stress}</label><input type="range" min="1" max="5" value="${state.infra.stress}" data-input="infra-stress"/></div>${gauge(risk,"asset risk",risk>85?"var(--pink)":"var(--cyan)")}<div class="switch-row"><span class="list-title">Mark as critical</span><span class="switch ${a.critical?"on":""}" data-action="asset-critical"></span></div></div><div class="glass-card"><div class="card-header"><div class="card-title">Asset Register</div><span class="pill">${state.assets.length}</span></div><div class="list">${state.assets.map(x=>`<div class="list-item" data-action="asset-select" data-value="${x.id}" style="border-color:${a.id===x.id?"rgba(31,244,237,.4)":""}"><span class="list-dot" style="background:${x.risk>85?"var(--pink)":x.risk>75?"var(--purple)":"var(--cyan)"}"></span><div class="list-main"><div class="list-title">${x.name}</div><div class="list-meta">${x.type} · ${x.district} · ${x.inspected?"Inspected":"Inspection due"}</div></div><span class="list-value">${x.risk}</span></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderFinance() {
+    const f=state.finance,selected=state.scenarios.filter(x=>f.selected.includes(x.id)),cost=selected.reduce((s,x)=>s+x.budget,0),avoided=selected.reduce((s,x)=>s+x.budget*x.roi,0),roi=cost?avoided/cost:0,gap=Math.max(0,cost-f.budget);
+    return `${header("Genesis Finance","Build investable adaptation portfolios using avoided damage, public-health benefit, energy savings and resilience ROI.",`<button class="btn danger" data-action="finance-status" data-value="Rejected">Reject</button><button class="btn purple" data-action="finance-status" data-value="Approved">Approve Portfolio</button><button class="btn primary" data-action="finance-opt">Optimise Portfolio</button>`)}<div class="metric-grid">${metric("Selected Investment",money(cost),"",`${selected.length} projects`,"var(--purple)")}${metric("Avoided Losses",money(avoided),"","20-year indicative benefit","var(--green)")}${metric("Portfolio ROI",roi.toFixed(1),"x","Combined resilience value","var(--cyan)")}${metric("Funding Gap",money(gap),"",gap?"Additional capital required":"Within approved budget","var(--pink)",gap>0)}</div><div class="content-grid"><div class="stack"><div class="glass-card"><div class="card-header"><div><div class="card-title">Adaptation Portfolio</div><div class="card-subtitle">Select projects for funding</div></div><span class="pill ${f.optimised?"active":""}">${f.optimised?"Optimised":"Manual"}</span></div>${state.scenarios.length===0?`<div class="empty">Create scenarios in Genesis Simulator to build an investment portfolio.</div>`:`<div class="list">${state.scenarios.map(x=>`<div class="list-item" data-action="finance-select" data-value="${x.id}"><span class="switch ${f.selected.includes(x.id)?"on":""}"></span><div class="list-main"><div class="list-title">${x.name}</div><div class="list-meta">${money(x.budget)} · ROI ${x.roi}x · ${compact(x.protectedPeople)} people · ${x.status}</div></div><span class="list-value">${x.tempReduction}°</span></div>`).join("")}</div>`}</div><div class="glass-card"><div class="card-header"><div class="card-title">Portfolio Benefit Curve</div><span class="pill active">20 years</span></div>${lineChart([0,cost*.08,cost*.18,cost*.31,cost*.47,cost*.68,cost*.92,cost*1.2,cost*1.5,cost*1.9,cost*2.3,avoided].map(v=>v/1000000))}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Budget Optimizer</div><span class="pill">AI allocation</span></div><div class="field"><label>Available budget · ${money(f.budget)}</label><input type="range" min="500000" max="10000000" step="100000" value="${f.budget}" data-input="finance-budget"/></div>${gauge(Math.min(100,cost/f.budget*100),"budget used",gap?"var(--pink)":"var(--cyan)")}<button class="btn primary" style="width:100%" data-action="finance-opt">Find Best Portfolio</button></div><div class="glass-card"><div class="card-header"><div class="card-title">Business Case Outputs</div><span class="pill active">Ready</span></div><div class="list">${["Adaptation Business Case","Funding Plan","Benefits Register","Investment Committee Note"].map(x=>`<div class="list-item"><span class="list-dot" style="background:var(--cyan)"></span><div class="list-main"><div class="list-title">${x}</div><div class="list-meta">Generated from current portfolio</div></div><button class="btn small" data-action="finance-export" data-value="${x}">Export</button></div>`).join("")}</div></div></div></div>`;
+  }
+
+  function renderCommand() {
+    const c=cityData[state.city];
+    const commandSvg=`<div class="glass-card terrain-panel" style="min-height:360px"><div class="terrain-label"><div class="eyebrow">Live Resilience Command</div><div class="card-title">${state.city} operational climate state</div></div><svg class="terrain-svg" viewBox="0 0 780 360"><defs><radialGradient id="cmd"><stop offset="0" stop-color="#35f3e8" stop-opacity=".5"/><stop offset="1" stop-color="#142039" stop-opacity="0"/></radialGradient></defs><rect width="780" height="360" fill="#111a30"/><circle cx="390" cy="180" r="160" fill="url(#cmd)"/><g fill="none" stroke="#5af3ee" opacity=".3">${[45,80,120,158].map(r=>`<circle cx="390" cy="180" r="${r}"/>`).join("")}</g>${modules.map((m,i)=>{const a=i/12*Math.PI*2-Math.PI/2,x=390+Math.cos(a)*145,y=180+Math.sin(a)*145;return `<g transform="translate(${x} ${y})" data-action="module" data-value="${m[0]}" style="cursor:pointer"><circle r="21" fill="${i<4?"#ff5fa8":i<8?"#8d5cff":"#1ff4ed"}" opacity=".26"/><circle r="10" fill="${i<4?"#ff5fa8":i<8?"#8d5cff":"#1ff4ed"}"/><text y="3" text-anchor="middle" font-size="7" fill="#07151d">${i+1}</text></g>`}).join("")}<circle cx="390" cy="180" r="48" fill="#263659" stroke="#5cf4ef"/><text x="390" y="174" text-anchor="middle" fill="#dfffff" font-size="13" font-weight="800">GENESIS</text><text x="390" y="194" text-anchor="middle" fill="#6ffaf3" font-size="22" font-weight="900">${c.score}</text></svg></div>`;
+    return `${header("Genesis Command","A unified resilience command centre for active alerts, projects, tasks, reports and executive climate operations.",`<button class="btn" data-action="command-csv">Export CSV</button><button class="btn purple" data-action="print">Print Dashboard</button><button class="btn primary" data-action="report">Generate Executive Report</button>`)}<div class="metric-grid">${metric("City Status",c.score,"/100",`${state.city} resilience posture`,"var(--cyan)")}${metric("Active Alerts",state.alerts.length,"",`${state.alerts.filter(a=>a.level==="Critical").length} critical`,"var(--pink)",state.alerts.length>2)}${metric("Open Tasks",state.tasks.filter(t=>t.status!=="Done").length,"",`${state.tasks.filter(t=>t.status==="In progress").length} in progress`,"var(--purple)")}${metric("Adaptation Projects",state.scenarios.length,"",`${state.scenarios.filter(s=>s.status==="Approved").length} approved`,"var(--green)")}</div><div class="content-grid"><div class="stack">${commandSvg}<div class="glass-card"><div class="card-header"><div><div class="card-title">System Performance</div><div class="card-subtitle">12-module operational health</div></div><span class="pill active">All systems online</span></div>${bars([94,89,91,86,82,88,93,96,90,84,87,95],modules.map((_,i)=>String(i+1).padStart(2,"0")))}</div></div><div class="stack"><div class="glass-card"><div class="card-header"><div class="card-title">Create Operational Task</div><span class="pill">Command workflow</span></div><div class="field"><label>Task</label><input id="newTask" placeholder="Describe the action…"/></div><div class="field"><label>Owner</label><select id="taskOwner">${["Climate Team","Public Health","Energy Operator","Finance","Infrastructure"].map(x=>`<option>${x}</option>`).join("")}</select></div><button class="btn primary" style="width:100%;margin-top:10px" data-action="task-add">Create Task</button></div><div class="glass-card"><div class="card-header"><div class="card-title">Operational Tasks</div><span class="pill active">${state.tasks.length}</span></div><div class="list">${state.tasks.slice(0,6).map(t=>`<div class="list-item"><span class="list-dot" style="background:${t.status==="Done"?"var(--green)":t.status==="In progress"?"var(--cyan)":"var(--purple)"}"></span><div class="list-main"><div class="list-title">${t.title}</div><div class="list-meta">${t.owner} · due ${t.due} · ${t.status}</div></div><button class="btn small" data-action="task-advance" data-value="${t.id}">Advance</button></div>`).join("")}</div></div><div class="glass-card"><div class="card-header"><div class="card-title">Incident Queue</div><span class="pill">${state.alerts.length}</span></div><div class="list">${state.alerts.slice(0,4).map(a=>`<div class="list-item"><span class="list-dot" style="background:var(--pink)"></span><div class="list-main"><div class="list-title">${a.title}</div><div class="list-meta">${a.level} · ${a.text}</div></div><button class="btn small" data-action="alert-resolve" data-value="${a.id}">Close</button></div>`).join("")}</div></div></div></div>`;
+  }
+
+  const renders={heat:renderHeat,equity:renderEquity,health:renderHealth,buildings:renderBuildings,energy:renderEnergy,water:renderWater,nature:renderNature,simulator:renderSimulator,forecast:renderForecast,infrastructure:renderInfrastructure,finance:renderFinance,command:renderCommand};
+
+  function render() {
+    renderNav();renderRail();
+    $("#module").innerHTML=renders[state.active]();
+    $("#citySelect").value=state.city;$("#dateInput").value=state.date;
+    save();
+  }
+
+  function reportModal() {
+    const c=cityData[state.city],d=selectedDistrict();
+    $("#modalRoot").innerHTML=`<div class="modal-backdrop" data-action="modal-backdrop"><div class="modal"><div class="card-header"><div><div class="eyebrow">Generated by HeatShield Genesis</div><h3>Urban Heat Resilience Report</h3></div><button class="btn danger" data-action="modal-close">Close</button></div><div class="report-paper"><h2>${state.city} Urban Heat Resilience</h2><p>Decision-ready executive summary generated from Earth-observation, vulnerability and intervention layers.</p><div class="report-grid"><div class="report-metric"><strong>${c.temp}°C</strong><span>Current urban temperature</span></div><div class="report-metric"><strong>${c.score}/100</strong><span>Genesis resilience score</span></div><div class="report-metric"><strong>${compact(c.exposed)}</strong><span>Population exposed</span></div><div class="report-metric"><strong>${d.heat}</strong><span>${d.name} heat score</span></div><div class="report-metric"><strong>${d.vulnerability}</strong><span>Social vulnerability</span></div><div class="report-metric"><strong>${state.scenarios.length}</strong><span>Adaptation scenarios</span></div></div><h3>Priority action</h3><p>Deploy a combined package of reflective roofs, targeted tree canopy, shaded walking routes and public-health cooling access in the highest-risk neighbourhoods. Validate the intervention package through a six-month commercial pilot.</p></div><div class="action-row" style="margin-top:14px"><button class="btn" data-action="print">Print</button><button class="btn purple" data-action="report-download">Download Report</button><button class="btn primary" data-action="modal-close">Done</button></div></div></div>`;
+    toast("Report compiled","A decision-ready urban heat resilience report has been generated.");
+  }
+
+  function globalAnalysis() { state.analysisBoost=(state.analysisBoost+1)%5;toast("Genesis analysis complete",`${state.city} data layers were recalculated for ${state.date}.`);render(); }
+  function exportSnapshot() { download(`heatshield-${state.city.toLowerCase()}-${state.date}.json`,JSON.stringify(state,null,2));toast("Snapshot exported","The current city state and active project data were downloaded."); }
+
+  document.addEventListener("click", e => {
+    const target=e.target.closest("[data-action]"); if(!target)return;
+    const action=target.dataset.action,val=target.dataset.value;
+    const rerender=()=>render();
+    switch(action) {
+      case "module": state.active=val;rerender();break;
+      case "global-analysis": globalAnalysis();break;
+      case "open-simulator": state.active="simulator";rerender();break;
+      case "report": reportModal();break;
+      case "export": exportSnapshot();break;
+      case "district": state.selectedDistrict=val;rerender();break;
+      case "map-layer": state.mapLayer=val;rerender();break;
+      case "period": state.period=val;rerender();break;
+      case "view": state.view=val;rerender();break;
+      case "visual-switch": target.classList.toggle("on");break;
+      case "heat-scan": toast("Heat scan complete",`${selectedDistrict().name} was processed across satellite, surface and urban-form layers.`);state.analysisBoost=(state.analysisBoost+1)%5;rerender();break;
+      case "equity-calc": toast("Equity model recalculated","Weights were normalised and neighbourhood priorities updated.");rerender();break;
+      case "equity-export": {const ranked=currentDistricts().map(d=>({...d,score:Math.round(d.vulnerability*.65+d.heat*.22+(100-d.greenery)*.13)})).sort((a,b)=>b.score-a.score);download("priority-neighbourhoods.csv","District,Equity Score,Population\n"+ranked.map(d=>`${d.name},${d.score},${d.population}`).join("\n"),"text/csv");toast("Priority list exported","Neighbourhood rankings were downloaded as CSV.");break;}
+      case "centre-add": state.centres++;rerender();break;
+      case "centre-remove": state.centres=Math.max(0,state.centres-1);rerender();break;
+      case "health-coverage": {const cov=clamp(42+state.centres*9-state.heatwave*2);toast("Coverage calculated",`${cov}% of vulnerable residents are within the target cooling-access radius.`);break;}
+      case "health-alert": {const visits=Math.round(118+state.heatwave*37-state.centres*5);state.alerts.unshift({id:Date.now(),level:"Severe",title:"Heat-health protocol activated",text:`${state.city} health partners were notified. Estimated emergency visits: ${visits}.`});toast("Health alert issued","Response partners were notified and the incident was added to Genesis Command.");rerender();break;}
+      case "facility-action": toast("Facility action created",`${val} was added to the heat-health response plan.`);break;
+      case "building-select": state.buildingIndex=+val;state.buildingActions=[];rerender();break;
+      case "building-action": state.buildingActions=state.buildingActions.includes(val)?state.buildingActions.filter(x=>x!==val):[...state.buildingActions,val];rerender();break;
+      case "building-reset": state.buildingActions=[];rerender();break;
+      case "building-scan": toast("Building scan complete",`${buildings[state.buildingIndex].name} envelope, roof and glazing risks were recalculated.`);break;
+      case "building-save": toast("Retrofit saved",`${state.buildingActions.length} interventions were saved for ${buildings[state.buildingIndex].name}.`);break;
+      case "energy-toggle": state.energy[val]=!state.energy[val];rerender();break;
+      case "energy-reset": state.energy={severity:3,solar:false,battery:false,demand:false,optimised:false};rerender();break;
+      case "energy-sim": toast("Heatwave simulated",`A level ${state.energy.severity} heatwave was propagated through the city energy model.`);break;
+      case "energy-opt": state.energy.optimised=true;state.energy.demand=true;toast("Grid portfolio optimised","Peak stress was reduced and flexible demand was activated.");rerender();break;
+      case "water-toggle": state.waterModel[val]=!state.waterModel[val];rerender();break;
+      case "water-reset": state.waterModel={drought:3,tank:false,irrigation:false,plants:false,plan:false};rerender();break;
+      case "water-sim": toast("Drought simulation complete",`Level ${state.waterModel.drought} drought impacts were calculated across water, soil and vegetation layers.`);break;
+      case "water-plan": state.waterModel.plan=true;toast("Water plan generated","A phased water-resilience plan was created and saved to Genesis Command.");rerender();break;
+      case "nature-type": state.natureType=val;rerender();break;
+      case "nature-add": {const i=state.interventions.length;state.interventions.push({x:120+(i*67)%300,y:110+(i*83)%210,type:state.natureType});toast("Intervention added",`${state.natureType} was placed in the selected district.`);rerender();break;}
+      case "nature-remove": state.interventions.splice(+val,1);rerender();break;
+      case "nature-clear": state.interventions=[];rerender();break;
+      case "nature-calc": toast("Nature impact calculated",`${state.interventions.length} interventions were evaluated across cooling, runoff and biodiversity metrics.`);break;
+      case "sim-reset": state.simulator={preset:"Combined Climate Package",budget:2500000,target:2,running:false};rerender();break;
+      case "sim-opt": state.simulator.budget=Math.round(state.simulator.budget*.88);state.simulator.target=Math.max(1,state.simulator.target-.2);toast("Scenario optimised","Genesis reduced capital cost while preserving most of the cooling benefit.");rerender();break;
+      case "sim-run": state.simulator.running=true;toast("Simulation started",`${state.simulator.preset} is being tested.`);rerender();setTimeout(()=>{state.simulator.running=false;const m=simMetrics();toast("Simulation complete",`Modelled reduction: ${m.temp}°C. Protected population: ${compact(m.people)}.`);render();},1200);break;
+      case "sim-save": {const m=simMetrics();state.scenarios.unshift({id:Date.now(),name:state.simulator.preset,intervention:state.simulator.preset,budget:state.simulator.budget,tempReduction:m.temp,protectedPeople:m.people,roi:m.roi,status:"Completed"});toast("Scenario saved",`${state.simulator.preset} was saved to the adaptation portfolio.`);rerender();break;}
+      case "sim-duplicate": if(state.scenarios.length){state.scenarios.unshift({...state.scenarios[0],id:Date.now(),name:state.scenarios[0].name+" Copy"});rerender();}break;
+      case "sim-delete": state.scenarios=state.scenarios.filter(x=>x.id!==+val);state.finance.selected=state.finance.selected.filter(x=>x!==+val);rerender();break;
+      case "forecast-days": state.forecast.days=+val;rerender();break;
+      case "forecast-reset": state.forecast.ran=false;rerender();break;
+      case "forecast-run": state.forecast.ran=true;toast("Forecast refreshed",`${state.forecast.days}-day heat forecast was recalculated.`);rerender();break;
+      case "forecast-alert": {const peak=(Math.max(...[29,31,33,35,34,32,30,29,31,34,36,35,33,31].slice(0,state.forecast.days))+((cityData[state.city].temp-30)*.35)).toFixed(1);state.alerts.unshift({id:Date.now(),level:state.forecast.risk,title:`${state.forecast.days}-day heat warning`,text:`Forecast indicates ${peak}°C peak conditions and persistent night-time heat.`});toast("Warning created","The early warning was added to Genesis Command.");rerender();break;}
+      case "alert-resolve": state.alerts=state.alerts.filter(x=>x.id!==+val);rerender();break;
+      case "asset-select": state.infra.selected=+val;rerender();break;
+      case "asset-inspect": state.assets=state.assets.map(x=>x.id===state.infra.selected?{...x,inspected:true}:x);toast("Inspection recorded","The selected asset risk model now includes inspection status.");rerender();break;
+      case "asset-work": {const a=state.assets.find(x=>x.id===state.infra.selected);toast("Work order created",`${a.name} received a priority heat-resilience inspection order.`);break;}
+      case "asset-stress": {const a=state.assets.find(x=>x.id===state.infra.selected),r=clamp(a.risk+state.infra.stress*3-(a.inspected?5:0));toast("Stress test complete",`${a.name} reached risk ${r}/100 under a level ${state.infra.stress} heat event.`);break;}
+      case "asset-critical": state.assets=state.assets.map(x=>x.id===state.infra.selected?{...x,critical:!x.critical}:x);rerender();break;
+      case "finance-select": state.finance.selected=state.finance.selected.includes(+val)?state.finance.selected.filter(x=>x!==+val):[...state.finance.selected,+val];state.finance.optimised=false;rerender();break;
+      case "finance-opt": {const ordered=[...state.scenarios].sort((a,b)=>b.roi-a.roi);let sum=0,ids=[];ordered.forEach(x=>{if(sum+x.budget<=state.finance.budget){sum+=x.budget;ids.push(x.id)}});state.finance.selected=ids;state.finance.optimised=true;toast("Portfolio optimised",`${ids.length} projects were selected within ${money(state.finance.budget)}.`);rerender();break;}
+      case "finance-status": state.scenarios=state.scenarios.map(x=>state.finance.selected.includes(x.id)?{...x,status:val}:x);toast(`Projects ${val.toLowerCase()}`,`${state.finance.selected.length} selected projects were updated.`);rerender();break;
+      case "finance-export": download(val.toLowerCase().replaceAll(" ","-")+".txt",`${val}\nCity: ${state.city}\nBudget: ${money(state.finance.budget)}\nSelected projects: ${state.finance.selected.length}`,"text/plain");toast("Document exported",`${val} was downloaded.`);break;
+      case "task-add": {const input=$("#newTask"),owner=$("#taskOwner");if(!input.value.trim())return;state.tasks.unshift({id:Date.now(),title:input.value.trim(),owner:owner.value,due:"2026-08-07",status:"To do"});toast("Task created","The operational task was added to Genesis Command.");rerender();break;}
+      case "task-advance": state.tasks=state.tasks.map(t=>t.id===+val?{...t,status:t.status==="To do"?"In progress":t.status==="In progress"?"Done":"To do"}:t);rerender();break;
+      case "command-csv": download("genesis-command-tasks.csv","Task,Owner,Due,Status\n"+state.tasks.map(t=>`${t.title},${t.owner},${t.due},${t.status}`).join("\n"),"text/csv");toast("Tasks exported","Genesis Command tasks were downloaded as CSV.");break;
+      case "print": window.print();break;
+      case "modal-close": $("#modalRoot").innerHTML="";break;
+      case "modal-backdrop": if(e.target===target)$("#modalRoot").innerHTML="";break;
+      case "report-download": {const c=cityData[state.city],d=selectedDistrict();download(`heatshield-${state.city.toLowerCase()}-report.txt`,`HEATSHIELD GENESIS EXECUTIVE REPORT\nCity: ${state.city}\nSelected district: ${d.name}\nUrban temperature: ${c.temp} C\nResilience score: ${c.score}/100\nPopulation exposed: ${c.exposed}\nScenarios: ${state.scenarios.length}\n`,"text/plain");toast("Report downloaded","The executive report was saved as a text document.");break;}
+    }
+  });
+
+  document.addEventListener("input", e => {
+    const type=e.target.dataset.input;if(!type)return;
+    const v=e.target.value;
+    switch(type) {
+      case "heat-intensity": state.heatIntensity=+v;break;
+      case "equity-weight": state.equityWeights[e.target.dataset.key]=+v;break;
+      case "equity-compare": state.equityCompare=v;break;
+      case "heatwave": state.heatwave=+v;break;
+      case "energy-severity": state.energy.severity=+v;break;
+      case "water-drought": state.waterModel.drought=+v;break;
+      case "nature-size": state.natureSize=+v;break;
+      case "sim-preset": state.simulator.preset=v;break;
+      case "sim-budget": state.simulator.budget=+v;break;
+      case "sim-target": state.simulator.target=+v;break;
+      case "forecast-risk": state.forecast.risk=v;break;
+      case "infra-stress": state.infra.stress=+v;break;
+      case "finance-budget": state.finance.budget=+v;state.finance.optimised=false;break;
+    }
+    render();
+  });
+
+  $("#citySelect").addEventListener("change",e=>{state.city=e.target.value;state.selectedDistrict="d3";toast("City changed",`${state.city} data model is now active.`);render();});
+  $("#dateInput").addEventListener("change",e=>{state.date=e.target.value;save();});
+  $("#globalAnalysis").addEventListener("click",globalAnalysis);
+  $("#brand").addEventListener("click",()=>{state.active="command";toast("Command Centre","All operational modules are visible from Genesis Command.");render();});
+  $("#themeBtn").addEventListener("click",()=>document.body.classList.toggle("dim"));
+  $("#reportBtnSide").addEventListener("click",reportModal);
+
+  render();
+})();
+
+</script>
+</body>
+</html>
